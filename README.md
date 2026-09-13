@@ -5,6 +5,31 @@ cursor in whatever app is in front.
 
 ## Native macOS app — 1.1.0
 
+### Download the released app
+
+[RAPP Voice v1.1.0](https://github.com/kody-w/rapp-voice/releases/tag/v1.1.0)
+is available for macOS 14+. Each ZIP contains a Developer ID-signed,
+notarized application with a stapled ticket.
+
+| Mac | Download | Publisher release report |
+|---|---|---|
+| Apple Silicon | [arm64 ZIP](https://github.com/kody-w/rapp-voice/releases/download/v1.1.0/rapp_voice-1.1.0-arm64.zip) | [Evidence JSON](https://github.com/kody-w/rapp-voice/releases/download/v1.1.0/rapp_voice-1.1.0-arm64.zip.evidence.json) |
+| Intel | [x86_64 ZIP](https://github.com/kody-w/rapp-voice/releases/download/v1.1.0/rapp_voice-1.1.0-x86_64.zip) | [Evidence JSON](https://github.com/kody-w/rapp-voice/releases/download/v1.1.0/rapp_voice-1.1.0-x86_64.zip.evidence.json) |
+
+Expand the matching ZIP in Finder, drag **RAPPVoice.app** into **Applications**,
+and launch it there. Download a verified speech model in Setup before dictating;
+the model weights are separate from the app download. The Python integration
+and legacy `install.sh` are **not** the native application installer.
+
+Release tag `v1.1.0` is bound to native source
+`45e5529509c04b2b346e27b8b8a82c59cb5ec32d`, with
+[successful source-bound native CI](https://github.com/kody-w/rapp-voice/actions/runs/34733631656).
+The reports above describe the enclosed app's actual signing, Gatekeeper, and
+stapler checks; the archive hashes and sizes are recorded in the federation
+metadata. Publisher reports are not an independent Apple or RAPP Store
+certification. Later metadata-only commits do not change the native source or
+the release tag.
+
 `native/` is a real **macOS 14+ SwiftUI/AppKit application**, not a Hammerspoon
 launcher. It owns microphone capture through AVFoundation, produces mono 16 kHz
 16-bit PCM WAV, and uses the bundled [whisper.cpp](https://github.com/ggerganov/whisper.cpp)
