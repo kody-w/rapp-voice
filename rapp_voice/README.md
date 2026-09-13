@@ -8,6 +8,8 @@ The native application is the primary desktop download. This source package
 retains its existing `runtime: "twin"` integration and port 7091: the Python
 singleton/UI and twin are secondary integration, not a native app installer.
 The retired egg is unchanged and is not the 1.1.0 desktop download.
+The native source now targets the unreleased 1.1.1 successor; the published
+desktop descriptors below intentionally remain bound to 1.1.0.
 
 ## Native downloads — 1.1.0
 

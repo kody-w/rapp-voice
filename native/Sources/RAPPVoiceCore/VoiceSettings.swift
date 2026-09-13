@@ -1,3 +1,4 @@
+import CryptoKit
 import Foundation
 
 public enum VoiceShortcut: String, CaseIterable, Codable, Sendable, Identifiable {
@@ -73,19 +74,43 @@ public struct PolishSettings: Codable, Equatable, Sendable {
     public var hookPath = ""
     public var approvedProvider: String?
     public var approvedHookPath: String?
+    public var approvedFingerprint: String?
     public init() {}
     public var hasConsent: Bool {
-        enabled && !provider.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && hookPath.hasPrefix("/") && provider == approvedProvider && hookPath == approvedHookPath
+        guard enabled, !provider.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              hookPath.hasPrefix("/"), provider == approvedProvider,
+              normalizedHookPath == approvedHookPath, let approvedFingerprint else { return false }
+        return (try? fingerprint()) == approvedFingerprint
+    }
+    private var normalizedHookPath: String {
+        URL(fileURLWithPath: hookPath).standardizedFileURL.path
+    }
+    public func fingerprint() throws -> String {
+        let executable = URL(fileURLWithPath: normalizedHookPath)
+        guard FileManager.default.isExecutableFile(atPath: executable.path),
+              (try executable.resourceValues(forKeys: [.isRegularFileKey])).isRegularFile == true else {
+            throw VoiceError.invalidAction("the selected polish hook is not an executable regular file")
+        }
+        var hash = SHA256()
+        hash.update(data: Data("\(provider)\n\(executable.path)\n".utf8))
+        let handle = try FileHandle(forReadingFrom: executable)
+        defer { try? handle.close() }
+        while let chunk = try handle.read(upToCount: 1024 * 1024), !chunk.isEmpty {
+            hash.update(data: chunk)
+        }
+        return hash.finalize().map { String(format: "%02x", $0) }.joined()
     }
     public mutating func revoke() {
         enabled = false
         approvedProvider = nil
         approvedHookPath = nil
+        approvedFingerprint = nil
     }
-    public mutating func approve() {
+    public mutating func approve() throws {
+        let fingerprint = try fingerprint()
         approvedProvider = provider
-        approvedHookPath = hookPath
+        approvedHookPath = normalizedHookPath
+        approvedFingerprint = fingerprint
         enabled = true
     }
 }

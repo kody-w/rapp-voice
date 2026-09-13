@@ -29,7 +29,7 @@ import RAPPVoiceCore
                     $0.processIdentifier != ProcessInfo.processInfo.processIdentifier
                 }
                 text = """
-                RAPP Voice 1.1.0 native environment
+                RAPP Voice 1.1.1 native environment
                   App running: \(running) (this action does not start capture)
                   Microphone: \(AVCaptureDevice.authorizationStatus(for: .audio).rawValue) (3 = authorized)
                   Accessibility: \(AXIsProcessTrusted())

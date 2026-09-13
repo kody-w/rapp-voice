@@ -25,6 +25,15 @@ final class PipelineTests: XCTestCase {
     private var forbiddenPolish: VoicePipeline.Polish {
         { _, _, _ in XCTFail("Polish must not run"); throw VoiceError.invalidAction("forbidden") }
     }
+    private func approvePolish(_ input: inout DictationRequest, provider: String = "Local fixture") throws -> URL {
+        let hook = directory.appendingPathComponent("polish-hook")
+        try Data("#!/bin/sh\ncat \"$1\"\n".utf8).write(to: hook)
+        try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: hook.path)
+        input.settings.polish.provider = provider
+        input.settings.polish.hookPath = hook.path
+        try input.settings.polish.approve()
+        return hook
+    }
     func testLocalPipelineForwardsWeightedPrompt() async throws {
         let input = try request()
         let result = try await VoicePipeline.run(input, transcribe: { _, _, language, prompt in
@@ -85,9 +94,7 @@ final class PipelineTests: XCTestCase {
     }
     func testPolishRequiresCurrentConsentAndTrigger() async throws {
         var input = try request()
-        input.settings.polish.provider = "Local fixture"
-        input.settings.polish.hookPath = "/fixture"
-        input.settings.polish.approve()
+        _ = try approvePolish(&input)
         let result = try await VoicePipeline.run(input, transcribe: { _, _, _, _ in "Polish, hello" }, polish: { text, _, _ in
             XCTAssertEqual(text, "hello"); return "hello, cleaned"
         })
@@ -99,9 +106,7 @@ final class PipelineTests: XCTestCase {
     }
     func testPolishFailurePreservesUsefulLocalText() async throws {
         var input = try request()
-        input.settings.polish.provider = "Fixture"
-        input.settings.polish.hookPath = "/fixture"
-        input.settings.polish.approve()
+        _ = try approvePolish(&input, provider: "Fixture")
         let result = try await VoicePipeline.run(input, transcribe: { _, _, _, _ in "polish um hello openrappter" },
                                                 polish: { _, _, _ in throw VoiceError.invalidAction("fixture failure") })
         XCTAssertEqual(result.text, "Hello OpenRappter.")
@@ -124,9 +129,7 @@ final class PipelineTests: XCTestCase {
     }
     func testCancellationDuringPolishDoesNotInsertLocalFallback() async throws {
         var input = try request()
-        input.settings.polish.provider = "Fixture"
-        input.settings.polish.hookPath = "/fixture"
-        input.settings.polish.approve()
+        _ = try approvePolish(&input, provider: "Fixture")
         do {
             _ = try await VoicePipeline.run(input, transcribe: { _, _, _, _ in "polish hello" },
                                            polish: { _, _, _ in throw CancellationError() })
@@ -163,12 +166,20 @@ final class PipelineTests: XCTestCase {
         settings.maxRecordSeconds = .infinity
         XCTAssertThrowsError(try file.save(settings))
         XCTAssertEqual(try file.read().maxRecordSeconds, 600)
+
+        settings = VoiceSettings()
+        settings.polish.enabled = true
+        settings.polish.provider = "Fixture"
+        settings.polish.hookPath = "/missing"
+        settings.polish.approvedProvider = "Fixture"
+        settings.polish.approvedHookPath = "/missing"
+        settings.polish.approvedFingerprint = "corrupt"
+        try file.save(settings)
+        XCTAssertFalse(try file.read().polish.hasConsent)
     }
     func testPolishTimeoutReturnsLabeledLocalText() async throws {
         var input = try request()
-        input.settings.polish.provider = "Fixture"
-        input.settings.polish.hookPath = "/fixture"
-        input.settings.polish.approve()
+        _ = try approvePolish(&input, provider: "Fixture")
         input.settings.polishTimeout = 0.005
         let result = try await VoicePipeline.run(input, transcribe: { _, _, _, _ in "polish um hello" },
                                                 polish: { _, _, _ in
@@ -178,5 +189,15 @@ final class PipelineTests: XCTestCase {
         XCTAssertEqual(result.text, "Hello.")
         guard case .localFallback(let reason) = result.cleanup else { return XCTFail("Expected explicit local fallback") }
         XCTAssertTrue(reason.contains("timed out"))
+    }
+    func testPolishConsentIsBoundToExecutableBytes() throws {
+        var input = try request()
+        let hook = try approvePolish(&input)
+        XCTAssertTrue(input.settings.polish.hasConsent)
+        try Data("#!/bin/sh\nprintf changed\n".utf8).write(to: hook)
+        try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: hook.path)
+        XCTAssertFalse(input.settings.polish.hasConsent)
+        try input.settings.polish.approve()
+        XCTAssertTrue(input.settings.polish.hasConsent)
     }
 }
