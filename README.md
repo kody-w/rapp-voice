@@ -101,8 +101,11 @@ host brainstem's LLM.
 
 ### Build and safe tests
 
-Development needs Xcode 16+ / Swift 6 and the sibling `rapp-tools` package.
-The release integrator pins that package to a tested full commit.
+Development needs Xcode 16+ / Swift 6. Both `native/Package.swift` and
+`native/project.yml` pin `https://github.com/kody-w/rapp-tools.git` to
+`f0bc616c2aed34f2a88888806ed056ec7bafba61`; no sibling checkout is needed.
+The SwiftPM and generated Xcode workspace `Package.resolved` files are committed
+as well, so dependency resolution is reproducible independently of this workspace.
 The current shared `SpeechTranscriber` has no prompt parameter: the
 dictionary-biased path therefore supplies `--prompt` to the same bundled
 `whisper-cli` through shared `RuntimeTools` / `ProcessRunner`. Unweighted ASR uses
@@ -121,6 +124,13 @@ xcodebuild -project RAPPVoice.xcodeproj -scheme RAPPVoice \
 cd ..
 ./tools/dryrun.sh --safe
 ```
+
+On a development host with Git's `safe.bareRepository=explicit`, SwiftPM's
+managed bare dependency clones may be rejected. For this approved pinned
+dependency, scope any exception to the build command, for example
+`env GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.bareRepository GIT_CONFIG_VALUE_0=all swift package resolve`.
+Use the same command-scoped environment for Xcode package resolution if needed;
+do not change global Git policy or identity.
 
 `swift build` builds the native executable, not a signed `.app`. Release
 packaging must put the appropriate `whisper-cli` and its runtime libraries at

@@ -13,4 +13,5 @@ __pycache__/
 native/.build/
 native/.swiftpm/
 native/DerivedData/
+# The generated workspace's Package.resolved is intentionally tracked.
 native/*.xcodeproj/

@@ -4,7 +4,8 @@ options:
     macOS: "14.0"
 packages:
   RAPPDesktopSupport:
-    path: ../../rapp-tools
+    url: https://github.com/kody-w/rapp-tools.git
+    revision: f0bc616c2aed34f2a88888806ed056ec7bafba61
 settings:
   base:
     SWIFT_VERSION: "5.0"

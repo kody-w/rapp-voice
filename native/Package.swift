@@ -8,7 +8,10 @@ let package = Package(
         .executable(name: "RAPPVoice", targets: ["RAPPVoice"]),
         .library(name: "RAPPVoiceCore", targets: ["RAPPVoiceCore"]),
     ],
-    dependencies: [.package(path: "../../rapp-tools")],
+    dependencies: [
+        .package(url: "https://github.com/kody-w/rapp-tools.git",
+                 revision: "f0bc616c2aed34f2a88888806ed056ec7bafba61"),
+    ],
     targets: [
         .target(name: "RAPPVoiceCore"),
         .executableTarget(
