@@ -3,36 +3,40 @@
 Hold a key anywhere on macOS, speak, release — cleaned-up text appears at your
 cursor in whatever app is in front.
 
-## Published native macOS app — 1.1.0
-
-The published download remains 1.1.0. The current native source is the unreleased
-1.1.1 successor; publishing it requires new signed/notarized artifacts and a
-separate metadata update.
+## Native macOS app — 1.1.1
 
 ### Download the released app
 
-[RAPP Voice v1.1.0](https://github.com/kody-w/rapp-voice/releases/tag/v1.1.0)
+[RAPP Voice v1.1.1](https://github.com/kody-w/rapp-voice/releases/tag/v1.1.1)
 is available for macOS 14+. Each ZIP contains a Developer ID-signed,
 notarized application with a stapled ticket.
 
-| Mac | Download | Publisher release report |
-|---|---|---|
-| Apple Silicon | [arm64 ZIP](https://github.com/kody-w/rapp-voice/releases/download/v1.1.0/rapp_voice-1.1.0-arm64.zip) | [Evidence JSON](https://github.com/kody-w/rapp-voice/releases/download/v1.1.0/rapp_voice-1.1.0-arm64.zip.evidence.json) |
-| Intel | [x86_64 ZIP](https://github.com/kody-w/rapp-voice/releases/download/v1.1.0/rapp_voice-1.1.0-x86_64.zip) | [Evidence JSON](https://github.com/kody-w/rapp-voice/releases/download/v1.1.0/rapp_voice-1.1.0-x86_64.zip.evidence.json) |
+| Mac | Download | Bytes | SHA-256 | Reports |
+|---|---|---:|---|---|
+| Apple Silicon | [arm64 ZIP](https://github.com/kody-w/rapp-voice/releases/download/v1.1.1/rapp_voice-1.1.1-arm64.zip) | 1,473,621 | `cb84d4178ba383a788fc5b6ade05bde6f751eeb1e680c4d6d8b6c5ce2f262afa` | [Evidence](https://github.com/kody-w/rapp-voice/releases/download/v1.1.1/rapp_voice-1.1.1-arm64.zip.evidence.0146c5d9e0f77a6714362188b6204da6ca7217d571415dcec23581c94b045876.json) · [Provenance](https://github.com/kody-w/rapp-voice/releases/download/v1.1.1/rapp_voice-1.1.1-arm64.release-result.json) |
+| Intel | [x86_64 ZIP](https://github.com/kody-w/rapp-voice/releases/download/v1.1.1/rapp_voice-1.1.1-x86_64.zip) | 1,691,382 | `f25ca135afd819f957d86316b0b01ffabffa402119616213f8b56d16481ccf9f` | [Evidence](https://github.com/kody-w/rapp-voice/releases/download/v1.1.1/rapp_voice-1.1.1-x86_64.zip.evidence.f84632710dd8fa94273120514cb498e053be11cf9dc5669ede97e1d1e5ef5002.json) · [Provenance](https://github.com/kody-w/rapp-voice/releases/download/v1.1.1/rapp_voice-1.1.1-x86_64.release-result.json) |
 
 Expand the matching ZIP in Finder, drag **RAPPVoice.app** into **Applications**,
 and launch it there. Download a verified speech model in Setup before dictating;
 the model weights are separate from the app download. The Python integration
 and legacy `install.sh` are **not** the native application installer.
 
-Release tag `v1.1.0` is bound to native source
-`45e5529509c04b2b346e27b8b8a82c59cb5ec32d`, with
-[successful source-bound native CI](https://github.com/kody-w/rapp-voice/actions/runs/34733631656).
+Release tag `v1.1.1` is bound to native source
+`75d10cc14819573f6d771231a0677aa21e157c47`, with
+[successful source-bound native CI](https://github.com/kody-w/rapp-voice/actions/runs/34767506909).
 The reports above describe the enclosed app's actual signing, Gatekeeper, and
 stapler checks; the archive hashes and sizes are recorded in the federation
 metadata. Publisher reports are not an independent Apple or RAPP Store
 certification. Later metadata-only commits do not change the native source or
 the release tag.
+
+The runtime build manifest records the pre-sign `bin/whisper-cli` input.
+Release assembly places the signed helper at
+`RAPPVoice.app/Contents/MacOS/whisper-cli`; the architecture-specific provenance
+reports record its post-sign SHA-256 (`6188075051264eb209b9bc12c613f66988cd6c3ee13d39b872c3bbbbacc7803d`
+for arm64 and `fe172ba3715e09466c3d4297c97dddffb4aa13afd24a8af7a5dff68db3708611`
+for x86_64). Only the enclosing app is stapled and Gatekeeper-assessed; the
+helper is code-signature- and hash-verified, not independently stapled.
 
 `native/` is a real **macOS 14+ SwiftUI/AppKit application**, not a Hammerspoon
 launcher. It owns microphone capture through AVFoundation, produces mono 16 kHz
@@ -163,9 +167,11 @@ Use the same command-scoped environment for Xcode package resolution if needed;
 do not change global Git policy or identity.
 
 `swift build` builds the native executable, not a signed `.app`. Release
-packaging must put the appropriate `whisper-cli` and its runtime libraries at
-`RAPPVoice.app/Contents/Resources/runtime/bin/`, then sign the app and its nested
-code and complete the release's notarization/publication checks. Source builds
+assembly starts from the pinned pre-sign `bin/whisper-cli`, records that input
+in `Contents/Resources/runtime/runtime.json`, and places the signed helper at
+`RAPPVoice.app/Contents/MacOS/whisper-cli`. The release-result JSON records the
+final helper hash and code-signature verification. The enclosing app—not the
+helper—is stapled and Gatekeeper-assessed. Source builds
 must not be represented as notarized downloads. The source targets arm64 and
 x86_64, macOS 14.0+. `RAPP_RUNTIME_BIN` is an explicit development override;
 there is no implicit PATH/Homebrew runtime fallback.
