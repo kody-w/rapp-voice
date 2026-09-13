@@ -1,8 +1,32 @@
 # RAPP Voice
 
-Hold a key anywhere on macOS, speak, release, and cleaned-up text appears at your cursor. Speech recognition runs on-device via whisper.cpp; your voice never leaves the machine. Filler stripping, app-aware formatting and a weighted personal dictionary.
+Native macOS dictation with local whisper.cpp recognition, a weighted dictionary,
+app-aware cleanup, and safe insertion or manual-copy fallback. Optional cloud
+polish is off until explicitly consented.
 
-A `runtime: "twin"` rapplication: it hatches into its own brainstem on port 7091 carrying only its own agent, and the host brainstem reaches it over twin-chat.
+The native application is the primary desktop download. This source package
+retains its existing `runtime: "twin"` integration and port 7091: the Python
+singleton/UI and twin are secondary integration, not a native app installer.
+The retired egg is unchanged and is not the 1.1.0 desktop download.
+
+## Native downloads — 1.1.0
+
+- [Apple Silicon / arm64 ZIP](https://github.com/kody-w/rapp-voice/releases/download/v1.1.0/rapp_voice-1.1.0-arm64.zip)
+  · [publisher release report](https://github.com/kody-w/rapp-voice/releases/download/v1.1.0/rapp_voice-1.1.0-arm64.zip.evidence.json)
+- [Intel / x86_64 ZIP](https://github.com/kody-w/rapp-voice/releases/download/v1.1.0/rapp_voice-1.1.0-x86_64.zip)
+  · [publisher release report](https://github.com/kody-w/rapp-voice/releases/download/v1.1.0/rapp_voice-1.1.0-x86_64.zip.evidence.json)
+
+Expand the correct ZIP in Finder, move **RAPPVoice.app** into **Applications**,
+then launch it and complete microphone/model setup. The ZIPs contain the signed,
+notarized/stapled native app; their exact live byte counts and SHA-256 values are
+in `manifest.json` and `index_entry.json`.
+
+The [release](https://github.com/kody-w/rapp-voice/releases/tag/v1.1.0) and
+[successful native CI run](https://github.com/kody-w/rapp-voice/actions/runs/34733631656)
+refer to native source `45e5529509c04b2b346e27b8b8a82c59cb5ec32d`.
+Federation resolves this later metadata revision separately and pins integration
+URLs to that metadata commit. Publisher reports are inspectable evidence, not
+independent Apple authentication or RAPP Store acceptance.
 
 ## Actions
 
