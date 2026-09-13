@@ -7,28 +7,32 @@ polish is off until explicitly consented.
 The native application is the primary desktop download. This source package
 retains its existing `runtime: "twin"` integration and port 7091: the Python
 singleton/UI and twin are secondary integration, not a native app installer.
-The retired egg is unchanged and is not the 1.1.0 desktop download.
-The native source now targets the unreleased 1.1.1 successor; the published
-desktop descriptors below intentionally remain bound to 1.1.0.
+The retired egg is unchanged and is not the native desktop download.
 
-## Native downloads — 1.1.0
+## Native downloads — 1.1.1
 
-- [Apple Silicon / arm64 ZIP](https://github.com/kody-w/rapp-voice/releases/download/v1.1.0/rapp_voice-1.1.0-arm64.zip)
-  · [publisher release report](https://github.com/kody-w/rapp-voice/releases/download/v1.1.0/rapp_voice-1.1.0-arm64.zip.evidence.json)
-- [Intel / x86_64 ZIP](https://github.com/kody-w/rapp-voice/releases/download/v1.1.0/rapp_voice-1.1.0-x86_64.zip)
-  · [publisher release report](https://github.com/kody-w/rapp-voice/releases/download/v1.1.0/rapp_voice-1.1.0-x86_64.zip.evidence.json)
+- [Apple Silicon / arm64 ZIP](https://github.com/kody-w/rapp-voice/releases/download/v1.1.1/rapp_voice-1.1.1-arm64.zip)
+  · [publisher evidence](https://github.com/kody-w/rapp-voice/releases/download/v1.1.1/rapp_voice-1.1.1-arm64.zip.evidence.0146c5d9e0f77a6714362188b6204da6ca7217d571415dcec23581c94b045876.json)
+  · [build provenance](https://github.com/kody-w/rapp-voice/releases/download/v1.1.1/rapp_voice-1.1.1-arm64.release-result.json)
+- [Intel / x86_64 ZIP](https://github.com/kody-w/rapp-voice/releases/download/v1.1.1/rapp_voice-1.1.1-x86_64.zip)
+  · [publisher evidence](https://github.com/kody-w/rapp-voice/releases/download/v1.1.1/rapp_voice-1.1.1-x86_64.zip.evidence.f84632710dd8fa94273120514cb498e053be11cf9dc5669ede97e1d1e5ef5002.json)
+  · [build provenance](https://github.com/kody-w/rapp-voice/releases/download/v1.1.1/rapp_voice-1.1.1-x86_64.release-result.json)
 
 Expand the correct ZIP in Finder, move **RAPPVoice.app** into **Applications**,
 then launch it and complete microphone/model setup. The ZIPs contain the signed,
 notarized/stapled native app; their exact live byte counts and SHA-256 values are
 in `manifest.json` and `index_entry.json`.
 
-The [release](https://github.com/kody-w/rapp-voice/releases/tag/v1.1.0) and
-[successful native CI run](https://github.com/kody-w/rapp-voice/actions/runs/34733631656)
-refer to native source `45e5529509c04b2b346e27b8b8a82c59cb5ec32d`.
+The [release](https://github.com/kody-w/rapp-voice/releases/tag/v1.1.1) and
+[successful native CI run](https://github.com/kody-w/rapp-voice/actions/runs/34767506909)
+refer to native source `75d10cc14819573f6d771231a0677aa21e157c47`.
 Federation resolves this later metadata revision separately and pins integration
 URLs to that metadata commit. Publisher reports are inspectable evidence, not
 independent Apple authentication or RAPP Store acceptance.
+
+The provenance reports distinguish the pre-sign `bin/whisper-cli` input from
+the final signed `Contents/MacOS/whisper-cli`. Only the enclosing app is stapled
+and Gatekeeper-assessed.
 
 ## Actions
 
@@ -40,7 +44,7 @@ independent Apple authentication or RAPP Store acceptance.
 
 ## Requires
 
-The native **RAPP Voice 1.1.0** app (macOS 14+) and a downloaded, verified
+The native **RAPP Voice 1.1.1** app (macOS 14+) and a downloaded, verified
 on-device model for dictation. The adapter discovers `RAPPVoice.app` in
 `/Applications` or `~/Applications`, or `RAPPVOICE_NATIVE_CLI`, and invokes its
 existing five actions as typed JSON (`RAPPVoice --action`). None of these actions
