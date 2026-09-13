@@ -3,24 +3,180 @@
 Hold a key anywhere on macOS, speak, release — cleaned-up text appears at your
 cursor in whatever app is in front.
 
-Speech recognition runs on your own GPU via
-[whisper.cpp](https://github.com/ggerganov/whisper.cpp) — no cloud, no account, no
-API key, and your audio is transcribed locally then discarded. The dictation path
-never touches the network. (Driving the hatched twin over `/chat` is a separate
-thing and does use the host brainstem's LLM — see rapp-tools for that distinction.)
+## Native macOS app — 1.1.0
 
-Measured on an Apple M4: **142–350 ms** from key-release to text ready.
+`native/` is a real **macOS 14+ SwiftUI/AppKit application**, not a Hammerspoon
+launcher. It owns microphone capture through AVFoundation, produces mono 16 kHz
+16-bit PCM WAV, and uses the bundled [whisper.cpp](https://github.com/ggerganov/whisper.cpp)
+engine through RAPP Tools' shared desktop support. **No Hammerspoon, Homebrew,
+ffmpeg, localhost server, account, or API key is required at runtime.**
 
 ```
-key down ──► ffmpeg (avfoundation, 16 kHz mono)
-key up   ──► whisper-server  (model stays resident in RAM)
-         ──► filler stripping · sentence case · app-aware formatting · dictionary
-         ──► clipboard + ⌘V at your cursor
+explicit hold / Start → app-owned AVFoundation microphone → mono 16 kHz PCM WAV
+release / Stop        → bundled whisper-cli + weighted dictionary prompt
+                      → local cleanup + app-aware formatting
+                      → verified safe target, or visible Copy / manual-paste result
 ```
+
+Audio work files are deleted after completion, errors, or cancellation. Native
+diagnostics store counts and status, **not transcripts**. Capture never starts
+on launch or as a side effect of a model download or permission grant. The app
+does not run the optional legacy polish hook unless separately consented.
+
+### Native setup and use
+
+1. Open **RAPP Voice → Setup**. Enable Microphone; granting it records nothing.
+2. Select **Base English** (~148 MB) or **Small English** (~488 MB). Press
+   **Download / retry** and wait for size/SHA-256 verification. Progress,
+   cancellation, errors, and retry are visible. Save the model selection.
+3. For the all-app shortcut and automatic insertion, grant **Accessibility**
+   and **Input Monitoring** to **RAPP Voice**, then refresh grants or reopen
+   the app if macOS requires it. Without these, buttons, the own-app shortcut,
+   transcript review, and Copy/manual-paste remain usable.
+4. Focus a normal text field. **Hold Right ⌘**, speak, then release. Short taps
+   are discarded. **Double-tap** for hands-free recording; tap again or press
+   **Stop & transcribe**. **Cancel** or Escape stops work, invalidates late
+   results, and deletes that session's audio.
+
+The selected modifier is reserved **exclusively**. Use the opposite-side
+modifier for normal shortcuts. A dedicated session event-tap thread handles
+press/release in other apps **and RAPP Voice itself** without blocking behind
+model verification or microphone startup. Without global grants a local event
+monitor handles only this app. Settings include modifier choice, paste/type/manual
+insertion, language, recording limit, and clipboard restore delay.
+
+The original process, field, and selection must still match before automatic
+insertion. Secure Input, protected/unknown fields, missing event permissions,
+held modifiers, focus changes, and clipboard conflicts use a clearly labeled
+manual path. The app never activates another app or forces protected input.
+**“Copied only” is not “pasted.”** Keyboard-event delivery is labeled
+“paste shortcut sent” or “typing events sent,” not a confirmed target write.
+Only a verified insertion into RAPP Voice's own editor is labeled inserted.
+
+Paste mode snapshots every available pasteboard item/representation, including
+images and file URLs, and restores even an originally empty clipboard. A newer
+clipboard change is never overwritten. A clipboard that cannot be preserved
+fully is left untouched. Manual mode changes the clipboard **only** when you
+press Copy. Type mode avoids it completely; review the target after an
+interrupted partial typing operation.
+
+Defaults retain the Lua behavior: 0.25s tap, 0.35s double-tap window and minimum
+audio duration, 600s hard recording limit, 0.05s paste delay, and 0.25s clipboard
+restore delay. Native transcription has a 120s deadline; polish has a 60s deadline.
+Digital silence, short WAVs, annotations, and transcripts without words insert
+nothing. The native CLI loads a model per job, so the legacy resident-server
+latency measurements below are **not native performance claims**.
+
+### Dictionary, state, and optional polish
+
+Native dictation reads **the existing `~/.rappvoice/dictionary.txt`** at each
+recording. The GUI supports canonical terms and `heard text => Canonical Term`
+rewrites, literal punctuation/digits, deduplicated twice-weighted recognizer
+prompts, and longest-rewrite-first processing. Saving detects external edits
+instead of silently overwriting them. Native dictionaries are bounded to 64 KiB
+and reject NUL characters before recording starts. Fillers, sentence case, raw terminal/editor
+formatting, and dictionary casing have regression fixtures derived from the Lua
+acceptance suite.
+
+Native settings, verified models, status-only diagnostics, and per-job work live
+under `~/Library/Application Support/io.rapp.voice/`. Existing `~/.rappvoice`
+models, hooks, logs, and all root Lua/Hammerspoon files are preserved. Native
+settings do not rewrite `CONFIG` in `rappvoice.lua`.
+
+**Polish is OFF by default, even if `~/.rappvoice/hooks/polish.sh` exists.**
+The Optional polish tab discloses exactly which executable will receive the
+triggered transcript, asks for its provider/data recipient, and requires explicit
+consent. The legacy shipped hook uses Claude/Anthropic and may incur charges;
+review the file before enabling it. A hook is arbitrary user-chosen executable
+code, not an app-managed cloud service. Microphone audio is not passed to it.
+Changing the selected provider or path invalidates consent.
+
+When disabled, “polish” is ordinary dictated text and all cleanup stays local.
+When consented, saying “polish” first invokes the reviewed executable with the
+remaining text in a file. A failed, empty, or timed-out hook preserves useful
+local text and is labeled local fallback; cancellation never inserts that
+fallback. Model downloads are the only native network use without optional
+polish. Driving the existing twin over `/chat` is separate and can use its
+host brainstem's LLM.
+
+### Build and safe tests
+
+Development needs Xcode 16+ / Swift 6 and the sibling `rapp-tools` package.
+The release integrator pins that package to a tested full commit.
+The current shared `SpeechTranscriber` has no prompt parameter: the
+dictionary-biased path therefore supplies `--prompt` to the same bundled
+`whisper-cli` through shared `RuntimeTools` / `ProcessRunner`. Unweighted ASR uses
+`SpeechTranscriber` directly. No model transport, checksum, or process-lifecycle
+helper is duplicated.
+
+```bash
+cd native
+swift test -j 2
+swift build -j 2
+# XcodeGen produces the actual application/core/test targets:
+xcodegen generate --spec project.yml
+xcodebuild -project RAPPVoice.xcodeproj -scheme RAPPVoice \
+  -configuration Release -derivedDataPath DerivedData \
+  -jobs 2 CODE_SIGNING_ALLOWED=NO build
+cd ..
+./tools/dryrun.sh --safe
+```
+
+`swift build` builds the native executable, not a signed `.app`. Release
+packaging must put the appropriate `whisper-cli` and its runtime libraries at
+`RAPPVoice.app/Contents/Resources/runtime/bin/`, then sign the app and its nested
+code and complete the release's notarization/publication checks. Source builds
+must not be represented as notarized downloads. The source targets arm64 and
+x86_64, macOS 14.0+. `RAPP_RUNTIME_BIN` is an explicit development override;
+there is no implicit PATH/Homebrew runtime fallback.
+
+Safe tests use deterministic transcript fixtures, synthetic PCM samples, mock
+input/pasteboards, and isolated dictionaries under `native/.build/`. They never
+record the microphone, inject events, invoke paid APIs, download models, or
+change the user's clipboard/state. Native tests cover formatting, weighting,
+press/release/latch transitions, permission/model failures, cancellation,
+deadlines, WAV validation, polish consent/fallback, insertion policy, and
+pasteboard ownership. Adapter tests also exercise the built native action CLI.
+
+Real-device acceptance still requires a human on the final signed app:
+Microphone/TCC onboarding; physical modifier behavior in both this app and
+TextEdit/Notes/Terminal/Electron; latch/Stop/Escape and sleep cancellation;
+changing the focused field during ASR; Secure Input/password-field refusal;
+rich clipboard restoration with an active clipboard manager; and actual speech
+recognition with the bundled engine. Autonomous tests deliberately do not claim
+those grants, recordings, signing, or notarization results.
+
+### Native agent/CLI compatibility
+
+Both singleton and twin adapters discover an installed `RAPPVoice.app` in
+`/Applications` or `~/Applications` (both spaced and unspaced names), or an
+explicit `RAPPVOICE_NATIVE_CLI`. They send typed JSON to the executable:
+
+```bash
+printf '%s' '{"action":"process","text":"um git status","app":"Terminal"}' \
+  | /Applications/RAPPVoice.app/Contents/MacOS/RAPPVoice --action
+```
+
+The existing five actions remain `doctor`, `dictionary`, `add_term`, `stats`,
+and `process`. Responses are bounded-action JSON with `ok`, `runtime`, `version`,
+`action`, and `text`; no Grail/protocol/manifest identity or retired egg changes
+are made. No action can capture, paste, run a shell, or invoke polish.
+`doctor` reports native readiness without opening the mic or requesting grants.
+Adapters use legacy `hs` / localhost only if no native executable is present;
+a native failure is reported, never silently retried through legacy side effects.
+Tests/developers can isolate state with `RAPPVOICE_HOME` and
+`RAPPVOICE_NATIVE_HOME`; normal operation preserves the existing home directory.
 
 ---
 
-## Install
+## Legacy Hammerspoon compatibility
+
+The rest of this document describes the retained Lua runtime, not native app
+requirements. Its historical measured Apple M4 latency was **142–350 ms** with a
+resident whisper-server. Do not run both runtimes' same global shortcut at once;
+disable the legacy module when using the native shortcut.
+
+### Legacy install
 
 ```bash
 git clone https://github.com/kody-w/rapp-voice.git
@@ -225,10 +381,12 @@ Server output is in `whisper-server.log`.
 ## Tests
 
 ```bash
-./tools/dryrun.sh
+./tools/dryrun.sh --safe         # default: hermetic native + adapter tests
+./tools/dryrun.sh --legacy-live  # explicit, interactive legacy acceptance only
 ```
 
-41 assertions, no microphone and no keyboard needed: speech is synthesised with
+The historical suite contains 41 assertions. **It is not microphone/clipboard/cloud
+safe**: some speech is synthesised with
 `say`, then pushed through the real pipeline via the Hammerspoon `hs` CLI. It
 covers latency, filler stripping, app-aware raw mode, the dictionary (including
 terms with digits and terms ending in punctuation), both silence guards, the
@@ -239,7 +397,9 @@ dictionary, so your personal one does not affect the results.
 The hotkey state machine — tap, double-tap latch, long hold — is covered too, by
 `tools/statemachine.lua`, which the suite runs. It drives the press/release logic
 with synthetic events paced against the real `tapMaxSeconds` and
-`doubleTapSeconds` windows, so the latch is tested without needing Accessibility.
+`doubleTapSeconds` windows, but those state transitions **open the real microphone**.
+It also modifies the live clipboard, restarts services, and can call the paid
+polish hook. Do not run `--legacy-live` in autonomous validation.
 
 What is left for a human, because only the real eventtap and a real ⌘V can
 exercise it:

@@ -1,14 +1,21 @@
 #!/bin/bash
-# RAPP Voice dry-run acceptance tests.
-# Everything here runs WITHOUT touching your microphone or your keyboard:
-# speech is synthesised with `say`, then pushed through the real RAPP Voice
-# pipeline (whisper-server → filler stripping → app-aware formatting) via the
-# Hammerspoon `hs` CLI. Tests that need real keys/mic are listed at the end.
-#
-# It never injects keystrokes, so it cannot type into whatever you have open. It
-# does briefly take over the clipboard and record a few short mic clips (nothing
-# is inserted or kept), so do not run it in the middle of a copy-paste.
+# Safe native acceptance tests are the default. They never access a microphone,
+# clipboard, live keyboard, cloud hook, or user dictionary.
+# --legacy-live explicitly opts into the historical suite below. That suite
+# DOES record microphone clips, modify the live clipboard, restart Hammerspoon
+# and its server, and potentially invoke the paid Claude polish hook.
 set -uo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+case "${1:---safe}" in
+  --safe)
+    mkdir -p "$ROOT/native/.build/Work"
+    (cd "$ROOT/native" && TMPDIR="$ROOT/native/.build/Work/" swift test -j 2) || exit 1
+    exec python3 -B "$ROOT/tools/test_native_adapter.py"
+    ;;
+  --legacy-live) ;;
+  *) echo "Usage: $0 [--safe | --legacy-live]" >&2; exit 2 ;;
+esac
 
 
 # Homebrew prefix differs by architecture (/opt/homebrew on Apple Silicon,
