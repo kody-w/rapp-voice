@@ -23,7 +23,7 @@ public struct NativeRequest: Decodable, Sendable {
 public struct NativeResponse: Encodable, Sendable {
     public let ok: Bool
     public let runtime = "native"
-    public let version = "1.1.0"
+    public let version = "1.1.1"
     public let action: String
     public let text: String
     public init(ok: Bool, action: String, text: String) {

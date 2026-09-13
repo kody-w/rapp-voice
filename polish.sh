@@ -16,7 +16,6 @@ brewbin() { for p in "/opt/homebrew/bin/$1" "/usr/local/bin/$1"; do
 
 export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
 
-text="$(cat "$1")"
-[ -n "$text" ] || exit 1
+[ -s "$1" ] || exit 1
 
-claude -p "Clean up this dictated text: fix grammar, remove self-corrections and false starts, keep meaning and my voice. Output ONLY the cleaned text: $text"
+exec claude -p "Clean up the dictated text supplied on standard input: fix grammar, remove self-corrections and false starts, and keep the meaning and voice. Output ONLY the cleaned text." < "$1"

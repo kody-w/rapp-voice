@@ -41,6 +41,46 @@ ADAPTERS = [
 
 
 class AdapterTests(unittest.TestCase):
+    def test_integration_copy_distinguishes_native_engine_from_host_chat(self):
+        ui = (ROOT / "rapp_voice/ui/index.html").read_text()
+        soul = (ROOT / "rapp_voice/twin/soul.md").read_text()
+        self.assertIn("bundled whisper-cli", ui)
+        self.assertIn("conversation model may be remote", ui)
+        self.assertIn("Prefer the installed", soul)
+        self.assertNotIn("Speech recognition is whisper.cpp on localhost", soul)
+
+    def test_shipped_polish_hook_keeps_transcript_out_of_argv(self):
+        directory = ROOT / "native/.build/hook-tests" / str(uuid.uuid4())
+        home = directory / "home"
+        binary = home / ".local/bin/claude"
+        transcript = directory / "transcript.txt"
+        arguments = directory / "arguments.txt"
+        standard_input = directory / "stdin.txt"
+        try:
+            binary.parent.mkdir(parents=True)
+            transcript.parent.mkdir(parents=True, exist_ok=True)
+            transcript.write_text("sensitive fixture transcript", encoding="utf-8")
+            binary.write_text(
+                "#!/bin/sh\n"
+                "printf '%s\\n' \"$@\" > \"$VOICE_TEST_ARGS\"\n"
+                "cat > \"$VOICE_TEST_STDIN\"\n"
+                "printf 'cleaned fixture\\n'\n",
+                encoding="utf-8",
+            )
+            binary.chmod(0o700)
+            result = subprocess.run(
+                [str(ROOT / "polish.sh"), str(transcript)],
+                capture_output=True, text=True, timeout=10,
+                env=dict(os.environ, HOME=str(home), VOICE_TEST_ARGS=str(arguments),
+                         VOICE_TEST_STDIN=str(standard_input)),
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.stdout, "cleaned fixture\n")
+            self.assertNotIn(transcript.read_text(), arguments.read_text())
+            self.assertEqual(standard_input.read_text(), transcript.read_text())
+        finally:
+            shutil.rmtree(directory, ignore_errors=True)
+
     def test_native_dispatch_uses_typed_stdin_and_no_lua(self):
         for module in ADAPTERS:
             payload = 'quotes " and [==[ and ]==] and \n not code'
@@ -144,7 +184,7 @@ class NativeCLITests(unittest.TestCase):
         result = subprocess.run([str(BINARY), "--version"], capture_output=True, text=True,
                                 env=self.environment, timeout=30)
         self.assertEqual(result.returncode, 0)
-        self.assertEqual(result.stdout.strip(), "RAPPVoice 1.1.0")
+        self.assertEqual(result.stdout.strip(), "RAPPVoice 1.1.1")
         self.assertFalse((self.directory / "native").exists())
 
 

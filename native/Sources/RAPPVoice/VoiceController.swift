@@ -357,7 +357,7 @@ import RAPPVoiceCore
             errorState = false
         } catch { status = "Copy failed: \(error.localizedDescription)"; errorState = true }
     }
-    func saveSettings() {
+    @discardableResult func saveSettings() -> Bool {
         do {
             guard let paths else { throw VoiceError.invalidAction("native storage is unavailable") }
             _ = try settings.validated()
@@ -370,7 +370,12 @@ import RAPPVoiceCore
             refreshPermissions()
             status = "Native settings saved. Legacy Lua configuration was not changed."
             errorState = false
-        } catch { status = "Settings not saved: \(error.localizedDescription)"; errorState = true }
+            return true
+        } catch {
+            status = "Settings not saved: \(error.localizedDescription)"
+            errorState = true
+            return false
+        }
     }
     func reloadDictionary() {
         do {
@@ -405,20 +410,26 @@ import RAPPVoiceCore
     }
     func cancelDownload() { models.cancel(); modelTask?.cancel() }
     func approvePolish() {
-        let hook = URL(fileURLWithPath: settings.polish.hookPath)
-        let regular = (try? hook.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true
-        guard !settings.polish.provider.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-              settings.polish.hookPath.hasPrefix("/"), regular,
-              FileManager.default.isExecutableFile(atPath: settings.polish.hookPath) else {
-            status = "Consent was not enabled: provide the actual recipient and an executable reviewed hook."
-            return
+        do {
+            guard !settings.polish.provider.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                  settings.polish.hookPath.hasPrefix("/") else {
+                throw VoiceError.invalidAction("provide the actual recipient and an absolute executable hook path")
+            }
+            try settings.polish.approve()
+            if !saveSettings() {
+                settings.polish.revoke()
+                status = "Consent remains disabled because native settings could not be saved."
+            }
+        } catch {
+            settings.polish.revoke()
+            status = "Consent was not enabled: \(error.localizedDescription)"
+            errorState = true
         }
-        settings.polish.approve()
-        saveSettings()
     }
     func disablePolish() { settings.polish.revoke(); saveSettings() }
     func polishSelectionChanged() {
-        guard settings.polish.approvedProvider != nil || settings.polish.approvedHookPath != nil else { return }
+        guard settings.polish.approvedProvider != nil || settings.polish.approvedHookPath != nil ||
+                settings.polish.approvedFingerprint != nil else { return }
         settings.polish.revoke()
         if busy { cancel("Cancelled because the polish provider or hook changed.") }
         do {

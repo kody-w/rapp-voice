@@ -5,7 +5,7 @@ import RAPPVoiceCore
 @main @MainActor enum RAPPVoiceMain {
     static func main() {
         let arguments = Array(CommandLine.arguments.dropFirst())
-        if arguments == ["--version"] { print("RAPPVoice 1.1.0"); return }
+        if arguments == ["--version"] { print("RAPPVoice 1.1.1"); return }
         if arguments == ["--action"] { exit(NativeCLI.run()) }
         if arguments == ["--help"] {
             print("RAPPVoice [--version | --action]\n--action reads one JSON request from stdin: doctor, dictionary, add_term, stats, process. No capture or insertion actions are exposed.")

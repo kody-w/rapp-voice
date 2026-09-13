@@ -12,7 +12,7 @@ import RAPPVoiceCore
                     .foregroundStyle(controller.recording ? .red : (controller.errorState ? .orange : .accentColor))
                 VStack(alignment: .leading) {
                     Text("RAPP Voice").font(.title.bold())
-                    Text("Native, on-device dictation · 1.1.0").foregroundStyle(.secondary)
+                    Text("Native, on-device dictation · 1.1.1").foregroundStyle(.secondary)
                 }
                 Spacer()
                 Text(controller.displayState).font(.headline)
@@ -106,7 +106,7 @@ import RAPPVoiceCore
         Form {
             Text(controller.settings.polish.hasConsent ? "Explicitly enabled for \(controller.settings.polish.provider)" : "OFF — local cleanup works without any cloud service")
                 .font(.headline).accessibilityIdentifier("voice.polish.state")
-            Text("Only after you enable a reviewed hook and say “\(controller.settings.polishTrigger)” first, the remaining transcript is passed to that executable as a file. It can send your text to the provider you name, run subprocesses, and incur charges. Microphone audio is not given to the hook. Review the script and the provider’s privacy policy before consenting. Changing the provider or path invalidates consent.")
+            Text("Only after you enable a reviewed hook and say “\(controller.settings.polishTrigger)” first, the remaining transcript is passed to that executable as a file. It can send your text to the provider you name, run subprocesses, and incur charges. Microphone audio is not given to the hook. Review the script and the provider’s privacy policy before consenting. Changing the provider, path, or executable bytes invalidates consent.")
             TextField("Provider / actual data recipient", text: $controller.settings.polish.provider)
                 .accessibilityIdentifier("voice.polish.provider")
                 .onChange(of: controller.settings.polish.provider) { _, _ in controller.polishSelectionChanged() }

@@ -3,7 +3,11 @@
 Hold a key anywhere on macOS, speak, release — cleaned-up text appears at your
 cursor in whatever app is in front.
 
-## Native macOS app — 1.1.0
+## Published native macOS app — 1.1.0
+
+The published download remains 1.1.0. The current native source is the unreleased
+1.1.1 successor; publishing it requires new signed/notarized artifacts and a
+separate metadata update.
 
 ### Download the released app
 
@@ -114,13 +118,14 @@ triggered transcript, asks for its provider/data recipient, and requires explici
 consent. The legacy shipped hook uses Claude/Anthropic and may incur charges;
 review the file before enabling it. A hook is arbitrary user-chosen executable
 code, not an app-managed cloud service. Microphone audio is not passed to it.
-Changing the selected provider or path invalidates consent.
+Changing the selected provider, path, or executable bytes invalidates consent.
 
 When disabled, “polish” is ordinary dictated text and all cleanup stays local.
 When consented, saying “polish” first invokes the reviewed executable with the
 remaining text in a file. A failed, empty, or timed-out hook preserves useful
 local text and is labeled local fallback; cancellation never inserts that
-fallback. Model downloads are the only native network use without optional
+fallback. The shipped Claude hook keeps transcript text out of process arguments
+and supplies it on standard input. Model downloads are the only native network use without optional
 polish. Driving the existing twin over `/chat` is separate and can use its
 host brainstem's LLM.
 
