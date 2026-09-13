@@ -43,9 +43,9 @@
         "arch": "arm64",
         "bytes": 1467143,
         "evidence": {
-          "bytes": 2755,
-          "sha256": "b9b43d29ed72d74a7d9a3d58a9c2b947d60aff1f3a6a6a7c2eaa0047be176ae9",
-          "url": "https://github.com/kody-w/rapp-voice/releases/download/v1.1.0/rapp_voice-1.1.0-arm64.zip.evidence.json"
+          "bytes": 2715,
+          "sha256": "ad6dc775592c074cc52b1df95835e60d18e6ca4122fbdf9337230e02195e271c",
+          "url": "https://github.com/kody-w/rapp-voice/releases/download/v1.1.0/rapp_voice-1.1.0-arm64.zip.evidence.ad6dc775592c074cc52b1df95835e60d18e6ca4122fbdf9337230e02195e271c.json"
         },
         "format": "zip",
         "sha256": "2b32c75c7530b51e58666c55eae5b0bddd3dd134f286a7ea01fc38fd164ed741",
@@ -55,9 +55,9 @@
         "arch": "x86_64",
         "bytes": 1684556,
         "evidence": {
-          "bytes": 2759,
-          "sha256": "3d0f87a28e8e82ceb393c7059ab58bb79fa13348a4eff714fe33f57cc171b266",
-          "url": "https://github.com/kody-w/rapp-voice/releases/download/v1.1.0/rapp_voice-1.1.0-x86_64.zip.evidence.json"
+          "bytes": 2719,
+          "sha256": "a988b9a0de46b5e45a92f980b116ea387785442c600a92561bbe004d5392ddcf",
+          "url": "https://github.com/kody-w/rapp-voice/releases/download/v1.1.0/rapp_voice-1.1.0-x86_64.zip.evidence.a988b9a0de46b5e45a92f980b116ea387785442c600a92561bbe004d5392ddcf.json"
         },
         "format": "zip",
         "sha256": "e90ef0da386c9d4b1017bbce8179d112b4c6be222688cad1651bc955b432d2e0",
