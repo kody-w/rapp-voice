@@ -148,6 +148,35 @@ press/release/latch transitions, permission/model failures, cancellation,
 deadlines, WAV validation, polish consent/fallback, insertion policy, and
 pasteboard ownership. Adapter tests also exercise the built native action CLI.
 
+### Native CI and source freeze
+
+`.github/workflows/native-ci.yml` runs the same-repository checks on
+`macos-latest` (**arm64**) and `macos-15-intel` (**x86_64**) for pushes,
+pull requests, and manual dispatch. Each job checks its actual host architecture,
+runs the safe Swift and adapter suites, builds an unsigned architecture-specific
+`.app`, runs the Xcode core tests, and reruns the adapter checks against that
+built app's action CLI. XcodeGen is installed only if the runner lacks it.
+
+The exact local/CI entry points are:
+
+```bash
+./tools/native-ci.sh arm64    # on an Apple Silicon host
+./tools/native-ci.sh x86_64   # on an Intel host
+```
+
+The script uses `swift test -j 2`, `swift build -j 2`, Xcode `-jobs 2` with
+`CODE_SIGNING_ALLOWED=NO`, and `python3 -B tools/test_native_adapter.py`.
+It never launches the GUI, records speech, grants TCC permissions, downloads
+models, invokes polish, signs, or publishes. Its derived data and result bundles
+stay inside `native/.build/ci/`, separate from release packaging outputs.
+
+The workflow has read-only repository permissions and no signing secrets.
+For release publication, use a successful public push/dispatch run whose
+`head_sha` equals the final native-build commit; a PR merge-snapshot check is not
+that source-freeze reference. Concurrency includes the source SHA, so a later
+metadata-only commit does not cancel verification of the frozen native source.
+This CI run verifies source/build behavior, not Apple signing or notarization.
+
 Real-device acceptance still requires a human on the final signed app:
 Microphone/TCC onboarding; physical modifier behavior in both this app and
 TextEdit/Notes/Terminal/Electron; latch/Stop/Escape and sleep cancellation;
