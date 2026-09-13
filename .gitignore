@@ -8,3 +8,10 @@
 # the publishing gate reads it and says NO-GO — correctly.
 __pycache__/
 *.pyc
+
+# Native build products and local, app-owned test fixtures.
+native/.build/
+native/.swiftpm/
+native/DerivedData/
+# The generated workspace's Package.resolved is intentionally tracked.
+native/*.xcodeproj/
