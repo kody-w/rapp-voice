@@ -1,5 +1,9 @@
 # RAPP Voice
 
+<!-- rapp1:network-header:start -->
+[![RAPP/1](https://kody-w.github.io/rapp-hive-public/portfolio/badges/rapp-voice.svg)](https://github.com/kody-w/rapp-hive-public/blob/main/portfolio/repos/rapp-voice.md) · **New to RAPP?** [Start here: get your Brainstem →](https://github.com/kody-w/rapp-installer#start-here)
+<!-- rapp1:network-header:end -->
+
 Hold a key anywhere on macOS, speak, release — cleaned-up text appears at your
 cursor in whatever app is in front.
 
